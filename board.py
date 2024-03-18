@@ -1,4 +1,5 @@
 import numpy as np
+import constants
 class Board():
     def __init__(self):
         self.white_rook_bitboard = np.uint64(0)
@@ -31,5 +32,4 @@ class Board():
         return ~self.occupied_squares_bitboard
     
 
-    #defining attack squares
 
