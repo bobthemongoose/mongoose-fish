@@ -1,25 +1,6 @@
 import numpy as np
 from enum import IntEnum
-# Define hexadecimal representations for each row
-ROW_1 = 0xFF
-ROW_2 = 0xFF00
-ROW_3 = 0xFF0000
-ROW_4 = 0xFF000000
-ROW_5 = 0xFF00000000
-ROW_6 = 0xFF0000000000
-ROW_7 = 0xFF000000000000
-ROW_8 = 0xFF00000000000000
 
-rows = {1: ROW_1, 2: ROW_2, 3: ROW_3, 4: ROW_4, 5: ROW_5, 6: ROW_6, 7: ROW_7, 8: ROW_8}
-# Define hexadecimal representations for each column
-COL_1 = 0x0101010101010101
-COL_2 = COL_1 << 1
-COL_3 = COL_1 << 2
-COL_4 = COL_1 << 3
-COL_5 = COL_1 << 4
-COL_6 = COL_1 << 5
-COL_7 = COL_1 << 6
-COL_8 = COL_1 << 7
 
 
 #lsb (least significant bit) msb (most significant bit) trailing zero count trick
@@ -58,6 +39,10 @@ def msb_bitscan(bb):
     bb |= bb >> np.uint8(16)
     bb |= bb >> np.uint8(32)
     return msb_lookup[(bb * debruijn) >> np.uint8(58)]
+
+class Color(IntEnum):
+    WHITE = 0
+    BLACK = 1
 
 class Piece(IntEnum):
     PAWN = 0
@@ -100,3 +85,52 @@ class File(IntEnum):
     F = 5
     G = 6
     H = 7
+
+#Pregenerated hardcoded tables and bitboards
+EMPTY_BB = np.uint64(0)
+
+RANKS = np.array(
+            [np.uint64(0x00000000000000FF) << np.uint8(8*i) for i in range(8)],
+            dtype=np.uint64)
+FILES = np.array(
+            [np.uint64(0x0101010101010101) << np.uint8(i) for i in range(8)],
+            dtype=np.uint64)
+
+RANK_MASKS = np.fromiter(
+        (RANKS[i//8] for i in range(64)),
+        dtype=np.uint64,
+        count=64)
+
+FILE_MASKS = np.fromiter(
+        (FILES[i%8] for i in range(64)),
+        dtype=np.uint64,
+        count=64)
+
+A1H8_DIAG = np.uint64(0x8040201008040201)
+H1A8_ANTIDIAG = np.uint64(0x0102040810204080)
+
+CENTER = np.uint64(0x00003C3C3C3C0000)
+#helper to compute diag masks from main diagonals
+def compute_diag_mask(i):
+    diag = 8*(i & 7) - (i & 56)
+    north = -diag & (diag >> 31)
+    south = diag & (-diag >> 31)
+    return (A1H8_DIAG >> np.uint8(south)) << np.uint8(north)
+
+DIAG_MASKS = np.fromiter(
+        (compute_diag_mask(i) for i in range(64)),
+        dtype=np.uint64,
+        count=64)
+
+def compute_antidiag_mask(i):
+    diag = 56 - 8*(i & 7) - (i & 56)
+    north = -diag & (diag >> 31)
+    south = diag & (-diag >> 31)
+    return (H1A8_ANTIDIAG >> np.uint8(south)) << np.uint8(north)
+
+ANTIDIAG_MASKS = np.fromiter(
+        (compute_antidiag_mask(i) for i in range(64)),
+        dtype=np.uint64,
+        count=64)
+
+
