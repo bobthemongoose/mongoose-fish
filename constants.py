@@ -1,6 +1,6 @@
 import numpy as np
 from enum import IntEnum
-
+from square import Square
 
 
 #lsb (least significant bit) msb (most significant bit) trailing zero count trick
@@ -133,4 +133,79 @@ ANTIDIAG_MASKS = np.fromiter(
         dtype=np.uint64,
         count=64)
 
+
+#King Moves
+
+def gen_king_moves(pos):
+    square = Square(pos)
+    bitboard = square.to_bitboard()
+    #directions
+    nw = (bitboard & ~FILES[File.A]) << np.uint8(7)
+    n = bitboard << np.uint8(8)
+    ne = (bitboard & ~FILES[File.H]) << np.uint(9)
+    e = (bitboard & ~FILES[File.H]) << np.uint(1)
+    w = (bitboard & ~FILES[File.A]) >> np.uint8(1)
+    se  = (bitboard & ~FILES[File.H]) >> np.uint8(7)
+    s = bitboard >> np.uint(8)
+    sw = (bitboard & ~FILES[File.A]) >> np.uint(9)
+
+    return nw | n | ne | e | se | s | sw | w
+
+KING_MOVES = np.fromiter((gen_king_moves(pos) for pos in range(64)), dtype = np.uint(64), count = 64)
+
+#Knight Moves
+def gen_knight_moves(pos):
+    square = Square(pos)
+    bitboard = square.to_bitboard()
+
+    #edge limiting positions
+
+    m1 = ~(FILES[File.A] | FILES[File.B])
+    m2 = ~FILES[File.A]
+    m3 = ~FILES[File.H]
+    m4 = ~(FILES[File.H] | FILES[File.G])
+    #directional squares
+    sq1 = (bitboard & m1) << np.uint8(6)
+    sq2 = (bitboard & m2) << np.uint8(15)
+    sq3 = (bitboard & m3) << np.uint8(17)
+    sq4 = (bitboard & m4) << np.uint8(10)
+    sq5 = (bitboard & m4) >> np.uint8(6)
+    sq6 = (bitboard & m3) >> np.uint8(15)
+    sq7 = (bitboard & m2) >> np.uint8(17)
+    sq8 = (bitboard & m1) >> np.uint8(10)
+
+    return sq1 | sq2 | sq3 | sq4 | sq5 | sq6 | sq7 | sq8
+
+KNIGHT_MOVES = np.fromiter((gen_knight_moves(pos) for pos in range(64)), dtype = np.uint(64), count = 64)
+
+#Pawn non-attack moves
+def gen_pawn_na_moves(color, pos):
+    start_rank = RANKS[Rank.TWO] if color == Color.WHITE else RANKS[Rank.SEVEN]
+    square = Square(pos)
+    bitboard = square.to_bitboard
+    #forward function
+    forward = lambda bb, color, pos: bb << np.uint(8 * pos) if color == Color.WHITE else bb << np.uint(8 * pos)
+    sq1 = forward(bitboard, color, 1)
+    sq2 = forward((bitboard & start_rank), color, 2)
+    return sq1 | sq2
+
+PAWN_NA = np.fromiter((gen_pawn_na_moves(color, i) for color in Color for i in range(64)), dtype= np.uint64, count = 128)
+PAWN_NA.shape = (2, 64)
+
+#Pawn attacks
+def gen_pawn_attacks(color, pos):
+    square = Square(i)
+    bitboard = square.to_bitboard()
+
+    if color == Color.WHITE:
+        sq1 = (bitboard & ~FILES[File.A]) << np.uint8(7)
+        sq2 = (bitboard & ~FILES[File.H]) << np.uint8(9)
+    else:
+        sq1 = (bitboard & ~FILES[File.A]) >> np.uint8(9)
+        sq2 = (bitboard & ~FILES[File.H]) >> np.uint8(7)
+    
+    return sq1 | sq2
+
+PAWN_ATTACKS = np.fromiter((gen_pawn_attacks(color, pos) for color in Color for pos in range(64)), dtype = np.uint64, count = 128)
+PAWN_ATTACKS.shape = (2, 64)
 
