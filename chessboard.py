@@ -3,6 +3,7 @@ from constants import Color, File, Rank, Piece
 import board
 from square import Square
 
+
 class ChessBoard():
     def __init__(self):
         self.pieces = np.zeros((2, 6), dtype = np.uint64)
@@ -40,7 +41,7 @@ class ChessBoard():
             color = self.color
         return next(
             (p for p in Piece if 
-                bitboard.is_set(self.get_piece_bb(p, color), sq)),
+                board.is_set(self.get_piece_bb(p, color), sq)),
             None)
 
     def set_square(self, sq, piece, color=None):
@@ -51,9 +52,9 @@ class ChessBoard():
         combined_bb = self.combined_color[color]
         all_bb = self.combined_all
 
-        self.pieces[color][piece] = bitboard.set_square(piece_bb, sq)
-        self.combined_color[color] = bitboard.set_square(combined_bb, sq)
-        self.combined_all = bitboard.set_square(all_bb, sq)
+        self.pieces[color][piece] = board.set_square(piece_bb, sq)
+        self.combined_color[color] = board.set_square(combined_bb, sq)
+        self.combined_all = board.set_square(all_bb, sq)
 
     def clear_square(self, sq, color=None):
         # NOTE: Defaults to current color
@@ -68,9 +69,9 @@ class ChessBoard():
         combined_bb = self.combined_color[color]
         all_bb = self.combined_all
 
-        self.pieces[color][piece] = bitboard.clear_square(piece_bb, sq)
-        self.combined_color[color] = bitboard.clear_square(combined_bb, sq)
-        self.combined_all = bitboard.clear_square(all_bb, sq)
+        self.pieces[color][piece] = board.clear_square(piece_bb, sq)
+        self.combined_color[color] = board.clear_square(combined_bb, sq)
+        self.combined_all = board.clear_square(all_bb, sq)
 
     def apply_move(self, move):
         """

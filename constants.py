@@ -158,7 +158,7 @@ PAWN_NA.shape = (2, 64)
 
 #Pawn attacks
 def gen_pawn_attacks(color, pos):
-    square = Square(i)
+    square = Square(pos)
     bitboard = square.to_bitboard()
 
     if color == Color.WHITE:
@@ -188,14 +188,14 @@ def compute_first_rank_moves(i, occ):
     left_attacks = left_ray(x)
     left_blockers = left_attacks & occ
     if left_blockers != np.uint8(0):
-        leftmost = np.uint8(1) << msb_bitscan(np.uint64(left_blockers))
+        leftmost = np.uint8(1) << board.msb_bitscan(np.uint64(left_blockers))
         left_garbage = left_ray(leftmost)
         left_attacks ^= left_garbage
 
     right_attacks = right_ray(x)
     right_blockers = right_attacks & occ
     if right_blockers != np.uint8(0):
-        rightmost = np.uint8(1) << lsb_bitscan(np.uint64(right_blockers))
+        rightmost = np.uint8(1) << board.lsb_bitscan(np.uint64(right_blockers))
         right_garbage = right_ray(rightmost)
         right_attacks ^= right_garbage
 
