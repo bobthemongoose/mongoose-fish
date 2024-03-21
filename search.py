@@ -2,6 +2,13 @@ import movegen
 import eval
 import numpy as np
 
+def iter_deepening(board, transposition_table):
+    # while not terminate:
+    #     score = minimax(board, depth, eval.Score.CHECKMATE.value, -eval.Score.CHECKMATE.value, transposition_table):
+    #     depth += 1
+    # return score
+    pass
+
 def minimax(board, depth, alpha, beta, transposition_table):
     if depth == 0:
         return eval.evaluate(board)
