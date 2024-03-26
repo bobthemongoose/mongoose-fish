@@ -1,3 +1,3 @@
-class Game:
-    def __init__(self):
-        pass
+import chess
+board = chess.Board()
+
