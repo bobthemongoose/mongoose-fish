@@ -1,10 +1,5 @@
 import random
 import chess
-class transposition_table:
-    def __init__(self):
-        self.table = {}
-    
-
 class ZobristHash:
     def __init__(self):
         self.piece_keys = {}
@@ -30,3 +25,13 @@ class ZobristHash:
         h ^= self.piece_keys[(piece.piece_type, from_square)]
         h ^= self.piece_keys[(piece.piece_type, to_square)]
         return h ^ self.side_key
+class TranspositionTable:
+    def __init__(self, zh: ZobristHash):
+        self.table = {}
+        self.zh = zh
+
+    def add(self, board, eval_score, depth, best_move):
+        key = self.zh.hash(board)
+        if key not in self.table or self.table[key][1] < depth:
+            self.table[key] = (eval_score, depth, best_move)
+
