@@ -1,8 +1,7 @@
 import chess
 import eval
 import search
-fen = "2K5/8/2PP4/3RPp2/b1p3N1/k2p4/1n2P3/1n2R2B w - - 0 1"
+fen = "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w"
 board = chess.Board(fen)
-# board.set_board_fen(fen)
-print(search.minimax(board, chess.WHITE, 4))
-print(search.count[0])
+print(search.alphabeta(board, chess.WHITE, 4))
+print(search.count)

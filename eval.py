@@ -1,12 +1,15 @@
 import chess
 import constants
-def eval(board: chess.Board):
+def eval(board: chess.Board, color: chess.Color):
     count = 0
     for move in board.legal_moves:
         count += 1
     if count == 0:
         if board.is_checkmate():
-            return -10000
+            if color == chess.WHITE:
+                return -10000
+            else:
+                return 10000
         else:
             return 0
     else:
