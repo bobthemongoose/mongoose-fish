@@ -9,7 +9,7 @@ def run_alphabeta():
     board = chess.Board(fen)
     # result = eval.eval(board)
     # result = search.q_search(board, -10000, 10000)
-    result = search.alphabeta(board, 4)
+    result = search.id_search(board, 4)
     if board.turn != chess.WHITE:
         print(-result[0], result[1])
     else:
