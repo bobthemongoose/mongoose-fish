@@ -11,17 +11,21 @@ def eval(board: chess.Board):
             return 0
     else:
         score = count_material(board, chess.WHITE) - count_material(board, chess.BLACK)
-        # score += mobility_diff * constants.mob_factor
+        score += mobility_diff(board) * constants.mob_factor
         score += (calculate_weighted_scores(board, chess.WHITE) - calculate_weighted_scores(board, chess.BLACK)) * constants.ctrl_factor
-        return score
+        if board.turn == chess.WHITE:
+            return score
+
+        return -score
 #mobility heuristic
 def mobility_diff(board: chess.Board):
-    num_curr_moves = len(board.generate_legal_moves())
+    num_curr_moves = count_moves(board)
     board.turn = not board.turn
-    num_opp_moves = len(board.generate_legal_moves())
+    num_opp_moves = count_moves(board)
     board.turn = not board.turn
     return num_curr_moves-num_opp_moves
-
+def count_moves(board):
+    return len(list(board.generate_pseudo_legal_moves()))
 def squares_controlled_by_piece(board: chess.Board, square: chess.Square):
     return len(board.attacks(square))
 

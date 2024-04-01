@@ -48,6 +48,71 @@ zobrist_hash = ZobristHash()
 transposition_table = TranspositionTable(zobrist_hash)  # Initialize the transposition table
 
 
+# def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
+#     global transposition_table  # Assuming TranspositionTable is a global variable
+#     global zobrist_hash
+
+#     # Check if the position is already stored in the transposition table
+#     if not key:
+#         key = zobrist_hash.hash(board)
+#     table_entry = transposition_table.table.get(key)
+#     if table_entry and table_entry[1] >= depth:
+#         count[1] += 1
+#         return table_entry[0], table_entry[2]  # Return the evaluation score and best move
+
+#     count[0] += 1
+    
+#     # Evaluate the position if it's a leaf node or depth is zero
+#     if depth == 0 or not board.legal_moves:
+#         # score = eval.eval(board)
+#         score = q_search(board, alpha, beta)
+#         # if board.turn == chess.WHITE:
+#         #     score = q_search(board, alpha, beta, key)
+#         # else:
+#         #     score = q_search(board, -beta, -alpha, key)
+#         transposition_table.add_key(key, score, depth, None)  # Store the evaluation score
+#         return score, None
+
+#     best_move = None
+#     if board.turn == chess.WHITE:
+#         max_score = -100000
+#         for move in board.legal_moves:
+#             move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
+#             board.push(move)
+#             score, _ = alphabeta(board, depth - 1, alpha, beta, move_hash)
+#             board.pop()
+
+#             # Update alpha and beta
+            
+#             if score >= beta:
+#                 transposition_table.add_key(key, beta, depth, move)  # Store the evaluation score and best move
+#                 return beta, move
+#             if score > max_score:
+#                 best_move = move
+#                 max_score = score
+#             alpha = max(score, alpha)
+#         transposition_table.add_key(key, alpha, depth, best_move)  # Store the evaluation score and best move
+#         return alpha, best_move
+
+#     else:
+#         min_score = 100000
+#         for move in board.legal_moves:
+#             move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
+#             board.push(move)
+#             score, _ = alphabeta(board, depth - 1, alpha, beta, move_hash)
+#             board.pop()
+            
+#             # Update alpha and beta
+            
+#             if score <= alpha:
+#                 transposition_table.add_key(key, alpha, depth, move)  # Store the evaluation score and best move
+#                 return alpha, move
+#             if score < min_score:
+#                 best_move = move
+#                 min_score = score
+#             beta = min(score, beta)
+#         transposition_table.add_key(key, beta, depth, best_move)  # Store the evaluation score and best move
+#         return beta, best_move
 def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
     global transposition_table  # Assuming TranspositionTable is a global variable
     global zobrist_hash
@@ -65,53 +130,35 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
     # Evaluate the position if it's a leaf node or depth is zero
     if depth == 0 or not board.legal_moves:
         # score = eval.eval(board)
-        if board.turn == chess.WHITE:
-            score = q_search(board, alpha, beta, key)
-        else:
-            score = q_search(board, -beta, -alpha, key)
+        score = q_search(board, alpha, beta)
+        # if board.turn == chess.WHITE:
+        #     score = q_search(board, alpha, beta, key)
+        # else:
+        #     score = q_search(board, -beta, -alpha, key)
         transposition_table.add_key(key, score, depth, None)  # Store the evaluation score
         return score, None
 
     best_move = None
-    if board.turn == chess.WHITE:
-        max_score = -100000
-        for move in board.legal_moves:
-            move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
-            board.push(move)
-            score, _ = alphabeta(board, depth - 1, alpha, beta, move_hash)
-            board.pop()
+    max_score = -100000
+    for move in board.legal_moves:
+        move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
+        board.push(move)
+        score, _ = alphabeta(board, depth - 1, -beta, -alpha, move_hash)
+        score = -score
+        board.pop()
 
-            # Update alpha and beta
+        # Update alpha and beta
             
-            if score >= beta:
-                transposition_table.add_key(key, beta, depth, move)  # Store the evaluation score and best move
-                return beta, move
-            if score > max_score:
-                best_move = move
-                max_score = score
-            alpha = max(score, alpha)
-        transposition_table.add_key(key, alpha, depth, best_move)  # Store the evaluation score and best move
-        return alpha, best_move
+        if score >= beta:
+            transposition_table.add_key(key, beta, depth, move)  # Store the evaluation score and best move
+            return beta, move
+        if score > max_score:
+            best_move = move
+            max_score = score
+        alpha = max(score, alpha)
+    transposition_table.add_key(key, alpha, depth, best_move)  # Store the evaluation score and best move
+    return alpha, best_move
 
-    else:
-        min_score = 100000
-        for move in board.legal_moves:
-            move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
-            board.push(move)
-            score, _ = alphabeta(board, depth - 1, alpha, beta, move_hash)
-            board.pop()
-            
-            # Update alpha and beta
-            
-            if score <= alpha:
-                transposition_table.add_key(key, alpha, depth, move)  # Store the evaluation score and best move
-                return alpha, move
-            if score < min_score:
-                best_move = move
-                min_score = score
-            beta = min(score, beta)
-        transposition_table.add_key(key, beta, depth, best_move)  # Store the evaluation score and best move
-        return beta, best_move
 
 def q_search(board: chess.Board, alpha, beta, key = None):
     global transposition_table
