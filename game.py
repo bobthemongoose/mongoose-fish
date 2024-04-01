@@ -17,10 +17,10 @@ while not board.is_game_over():
             try:
                 move = board.parse_uci(input("move?\n"))
                 break
-            except chess.InvalidMoveError:
-                move = board.parse_uci(input("move?\n"))
+            except (chess.InvalidMoveError, chess.IllegalMoveError) as error:
+                move = board.parse_uci(input("not valid \n move?\n"))
     else:
-        evaluation, move = search.alphabeta(board, 4)
+        evaluation, move = search.alphabeta(board, 3)
         print(evaluation, move)
     board.push(move)
 print(board.outcome)

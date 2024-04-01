@@ -64,8 +64,12 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
     
     # Evaluate the position if it's a leaf node or depth is zero
     if depth == 0 or not board.legal_moves:
-        score = eval.eval(board)
-        # transposition_table.add_key(key, score, depth, None)  # Store the evaluation score
+        # score = eval.eval(board)
+        if board.turn == chess.WHITE:
+            score = q_search(board, alpha, beta, key)
+        else:
+            score = q_search(board, -beta, -alpha, key)
+        transposition_table.add_key(key, score, depth, None)  # Store the evaluation score
         return score, None
 
     best_move = None
@@ -109,4 +113,32 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
         transposition_table.add_key(key, beta, depth, best_move)  # Store the evaluation score and best move
         return beta, best_move
 
+def q_search(board: chess.Board, alpha, beta, key = None):
+    global transposition_table
+    global zobrist_hash
+    if not key:
+        key = zobrist_hash.hash(board)
+    table_entry = transposition_table.table.get(key)
+
+    if table_entry and table_entry[1] == 0:
+        return table_entry[0]
+    stand_pat = eval.eval(board)
+    if stand_pat >= beta:
+        return stand_pat
+    if stand_pat > alpha:
+        alpha = stand_pat
+    moves = board.generate_pseudo_legal_captures()
+    for move in moves:
+        move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
+        board.push(move)
+        score = -q_search(board, -beta, -alpha, move_hash)
+        board.pop()
+        if score > stand_pat:
+            stand_pat = score
+            if score > alpha:
+                alpha = score
+                if score >= beta:
+                    break
+    transposition_table.add_key(key, stand_pat, 0, None)
+    return stand_pat
 
