@@ -1,5 +1,7 @@
 import random
 import chess
+from enum import Enum
+Flag = Enum("Flag", ["NONEBOUND", "UPPERBOUND", "LOWERBOUND", "EXACTBOUND"])
 class ZobristHash:
     def __init__(self):
         self.piece_keys = {}
@@ -37,13 +39,14 @@ class TranspositionTable:
         self.table = {}
         self.zh = zh
 
-    def add(self, board, eval_score, depth, best_move):
+
+    def add(self, board, score, depth, best_move, flag):
         key = self.zh.hash(board)
         if (key not in self.table) or (self.table[key][1] < depth):
-            self.table[key] = (eval_score, depth, best_move)
+            self.table[key] = (score, depth, best_move, flag)
      
-    def add_key(self, key, eval_score, depth, best_move):
+    def add_key(self, key, score, depth, best_move, flag):
         if (key not in self.table) or (self.table[key][1] < depth):
-            self.table[key] = (eval_score, depth, best_move)
+            self.table[key] = (score, depth, best_move, flag)
 
 

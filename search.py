@@ -1,6 +1,6 @@
 import chess
 import eval
-from tt import TranspositionTable, ZobristHash
+from tt import TranspositionTable, ZobristHash, Flag
 count = [0, 0]
 def minimax(board: chess.Board, color: chess.Color, depth):
     count[0] += 1
@@ -28,19 +28,25 @@ transposition_table = TranspositionTable(zobrist_hash)  # Initialize the transpo
 
 
 def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
-    # global transposition_table  # Assuming TranspositionTable is a global variable
-    # global zobrist_hash
+    global transposition_table  # Assuming TranspositionTable is a global variable
+    global zobrist_hash
 
     # Check if the position is already stored in the transposition table
-    # if not key:
-    #     key = zobrist_hash.hash(board)
-    # table_entry = transposition_table.table.get(key)
-    # if table_entry and table_entry[1] >= depth:
-    #     count[1] += 1
-    #     return table_entry[0], table_entry[2]  # Return the evaluation score and best move
+    if not key:
+        key = zobrist_hash.hash(board)
+    table_entry = transposition_table.table.get(key)
+
+    if table_entry and table_entry[1] >= depth:
+        count[1] += 1
+        if table_entry[3] == Flag.LOWERBOUND:
+            alpha = max(alpha, table_entry[0])
+        elif table_entry[3] == Flag.UPPERBOUND:
+            beta = min(beta, table_entry[0])
+        if alpha >= beta:
+            return table_entry[0], table_entry[2]  # Return the evaluation score and best move
 
     count[0] += 1
-    
+    old_alpha = alpha
     # Evaluate the position if it's a leaf node or depth is zero
     if depth == 0 or not board.legal_moves:
         # score = eval.eval(board)
@@ -51,24 +57,32 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
     best_move = None
     max_score = -100000
     for move in board.legal_moves:
-        # move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
+        move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
         board.push(move)
-        # score, _ = alphabeta(board, depth - 1, -beta, -alpha, move_hash)
-        score, _ = alphabeta(board, depth - 1, -beta, -alpha)
+        score, _ = alphabeta(board, depth - 1, -beta, -alpha, move_hash)
         score = -score
         board.pop()
 
         # Update alpha and beta
-            
-        if score >= beta:
-            # transposition_table.add_key(key, score, depth, move)  # Store the evaluation score and best move
-            return beta, move
         if score > max_score:
             best_move = move
             max_score = score
-        alpha = max(score, alpha)
+            if score > alpha:
+                alpha = score
+                if score >= beta:
+                    break
+        if max_score >= beta:
+            bound = Flag.LOWERBOUND
+        else:
+            if alpha != old_alpha:
+                bound = Flag.EXACTBOUND
+            else:
+                bound = Flag.UPPERBOUND
+        transposition_table.add_key(key, max_score, depth, best_move, bound)  # Store the evaluation score and best move
+        
+        
     # transposition_table.add_key(key, alpha, depth, best_move)  # Store the evaluation score and best move
-    return alpha, best_move
+    return max_score, best_move
 
 def translate_score(color: chess.Color, eval):
     if color == chess.WHITE:
@@ -90,7 +104,11 @@ def q_search(board: chess.Board, alpha, beta, key = None):
         return stand_pat
     if stand_pat > alpha:
         alpha = stand_pat
-    moves = board.generate_pseudo_legal_captures()
+    moves = sorted(
+            board.generate_legal_captures(),
+            key=lambda move: scoreQMove(board, move),
+            reverse=True,
+        )
     for move in moves:
         # move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
         board.push(move)
@@ -114,3 +132,25 @@ def id_search(board: chess.Board, max_depth):
         print(depth, score, best_move)
         
     return score, best_move
+def mvvlva(board: chess.Board, move: chess.Move) -> int:
+        mvvlva: list[list[int]] = [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 105, 104, 103, 102, 101, 100],
+            [0, 205, 204, 203, 202, 201, 200],
+            [0, 305, 304, 303, 302, 301, 300],
+            [0, 405, 404, 403, 402, 401, 400],
+            [0, 505, 504, 503, 502, 501, 500],
+            [0, 605, 604, 603, 602, 601, 600],
+        ]
+
+        from_square = move.from_square
+        to_square = move.to_square
+        attacker = board.piece_type_at(from_square)
+        victim = board.piece_type_at(to_square)
+
+        # En passant
+        if victim is None:
+            victim = 1
+        return mvvlva[victim][attacker]
+def scoreQMove(board, move: chess.Move) -> int:
+        return mvvlva(board, move)
