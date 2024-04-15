@@ -20,7 +20,7 @@ while not board.is_game_over():
             except (chess.InvalidMoveError, chess.IllegalMoveError) as error:
                 move = board.parse_uci(input("not valid \n move?\n"))
     else:
-        evaluation, move = search.alphabeta(board, 3)
+        evaluation, move = search.alphabeta(board, 4)
         if player == chess.WHITE:
             print(-evaluation, move)
         else:

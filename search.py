@@ -2,25 +2,25 @@ import chess
 import eval
 from tt import TranspositionTable, ZobristHash, Flag
 count = [0, 0]
-def minimax(board: chess.Board, color: chess.Color, depth):
-    count[0] += 1
-    if depth == 0 or not board.legal_moves:
-        return eval.eval(board, color)
-    if color == chess.WHITE:
-        score = -10000
-        for move in board.legal_moves:
-            board.push(move)
-            score = max(score, minimax(board, chess.BLACK, depth - 1))
-            board.pop()
+# def minimax(board: chess.Board, color: chess.Color, depth):
+#     count[0] += 1
+#     if depth == 0 or not board.legal_moves:
+#         return eval.eval(board, color)
+#     if color == chess.WHITE:
+#         score = -10000
+#         for move in board.legal_moves:
+#             board.push(move)
+#             score = max(score, minimax(board, chess.BLACK, depth - 1))
+#             board.pop()
 
-        return score
-    else:
-        score = 10000
-        for move in board.legal_moves:
-            board.push(move)
-            score = min(score, minimax(board, chess.WHITE, depth - 1))
-            board.pop()
-        return score
+#         return score
+#     else:
+#         score = 10000
+#         for move in board.legal_moves:
+#             board.push(move)
+#             score = min(score, minimax(board, chess.WHITE, depth - 1))
+#             board.pop()
+#         return score
 
 
 zobrist_hash = ZobristHash()
@@ -44,7 +44,18 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
             beta = min(beta, table_entry[0])
         if alpha >= beta:
             return table_entry[0], table_entry[2]  # Return the evaluation score and best move
+    in_check = board.is_check()
+    if depth >= 3 and not in_check:
+            board.push(chess.Move.null())
 
+            score, _ = alphabeta(board, depth - 2, -beta, -beta + 1)
+            score = -score
+            board.pop()
+            if score >= beta:
+                if score >= 5000:
+                    score = beta
+
+                return score
     count[0] += 1
     old_alpha = alpha
     # Evaluate the position if it's a leaf node or depth is zero
@@ -56,13 +67,20 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
 
     best_move = None
     max_score = -100000
-    for move in board.legal_moves:
+    moves = sorted(
+            board.legal_moves,
+            key=lambda move: scoreMove(board, move),
+            reverse=True,
+        )
+    made = 0
+    for move in moves:
+        made += 1
         move_hash = zobrist_hash.update(key, move, board.piece_at(move.from_square))
         board.push(move)
         score, _ = alphabeta(board, depth - 1, -beta, -alpha, move_hash)
         score = -score
         board.pop()
-
+        made += 1
         # Update alpha and beta
         if score > max_score:
             best_move = move
@@ -71,16 +89,21 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
                 alpha = score
                 if score >= beta:
                     break
-        if max_score >= beta:
-            bound = Flag.LOWERBOUND
+    if made == 0:
+        if in_check:
+            return depth - 10000
         else:
-            if alpha != old_alpha:
-                bound = Flag.EXACTBOUND
-            else:
-                bound = Flag.UPPERBOUND
-        transposition_table.add_key(key, max_score, depth, best_move, bound)  # Store the evaluation score and best move
+            return 0
+    if max_score >= beta:
+        bound = Flag.LOWERBOUND
+    else:
+        if alpha != old_alpha:
+            bound = Flag.EXACTBOUND
+        else:
+            bound = Flag.UPPERBOUND
+    transposition_table.add_key(key, max_score, depth, best_move, bound)  # Store the evaluation score and best move
         
-        
+    
     # transposition_table.add_key(key, alpha, depth, best_move)  # Store the evaluation score and best move
     return max_score, best_move
 
@@ -132,6 +155,9 @@ def id_search(board: chess.Board, max_depth):
         print(depth, score, best_move)
         
     return score, best_move
+
+#most valuable victim/least valuable aggressor for q search move ordering
+
 def mvvlva(board: chess.Board, move: chess.Move) -> int:
         mvvlva: list[list[int]] = [
             [0, 0, 0, 0, 0, 0, 0],
@@ -154,3 +180,9 @@ def mvvlva(board: chess.Board, move: chess.Move) -> int:
         return mvvlva[victim][attacker]
 def scoreQMove(board, move: chess.Move) -> int:
         return mvvlva(board, move)
+
+def scoreMove(board: chess.Board, move: chess.Move) -> int:
+    if board.is_capture(move):
+        # make sure captures are ordered higher than quiets
+        return 10000 + mvvlva(board, move)
+    return 0

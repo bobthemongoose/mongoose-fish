@@ -19,13 +19,15 @@ def run_alphabeta():
 # execution_time = timeit.timeit(run_alphabeta, number=1)
 # print("Execution time:", execution_time, "seconds")
 
-fen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
+fen = "r2qkn1Q/pbp2p2/2pb4/3ppr2/8/2N1P1P1/PPPP1P1P/R1B1K1NR w KQkq - 0 1"
 board = chess.Board(fen)
-result = search.alphabeta(board, 3)
+print(board)
+# print(board.is_checkmate())
+result = search.alphabeta(board, 4)
 print(result)
-for move in board.legal_moves:
-    board.push(move)
-    print(move)
-    print(search.transposition_table.table[search.zobrist_hash.hash(board)])
-    board.pop()
-print(search.transposition_table.table[search.zobrist_hash.hash(board)])
+# for move in board.legal_moves:
+#     board.push(move)
+#     print(move)
+#     print(search.transposition_table.table[search.zobrist_hash.hash(board)])
+#     board.pop()
+# print(search.transposition_table.table[search.zobrist_hash.hash(board)])

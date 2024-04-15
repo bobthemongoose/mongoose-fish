@@ -1,22 +1,20 @@
 import chess
 import constants
 def eval(board: chess.Board):
-    if not board.legal_moves:
-        if board.is_checkmate():
-            if board.turn == chess.WHITE:
-                return -10000
-            else:
-                return 10000
+    w_mat = count_material(board, chess.WHITE)
+    b_mat = count_material(board, chess.BLACK)
+    score = w_mat - b_mat
+    score += mobility_diff(board) * constants.mob_factor
+    score += (calculate_weighted_scores(board, chess.WHITE) - calculate_weighted_scores(board, chess.BLACK)) * constants.ctrl_factor
+    if max(w_mat, b_mat) <= constants.piece_types[chess.KING] + 6 * constants.piece_types[chess.PAWN]:
+        if w_mat > b_mat:
+            score += mop_up(board, chess.WHITE)
         else:
-            return 0
-    else:
-        score = count_material(board, chess.WHITE) - count_material(board, chess.BLACK)
-        score += mobility_diff(board) * constants.mob_factor
-        score += (calculate_weighted_scores(board, chess.WHITE) - calculate_weighted_scores(board, chess.BLACK)) * constants.ctrl_factor
-        if board.turn == chess.WHITE:
-            return score
-
-        return -score
+            score += mop_up(board, chess.BLACK)
+    if board.turn == chess.WHITE:
+        return score
+    
+    return -score
 #mobility heuristic
 def mobility_diff(board: chess.Board):
     num_curr_moves = count_moves(board)
@@ -48,7 +46,11 @@ def count_material(board: chess.Board, color: chess.Color):
         sum+= len(board.pieces(piece, color)) * constants.piece_types[piece]
     return sum / 100
 
-    
+def mop_up(board: chess.Board, win_color: chess.Color):
+    win_king = board.king(win_color)
+    lose_king = board.king(not win_color)
+    king_dist = chess.square_manhattan_distance(win_king, lose_king)
+    return (4.7 * constants.cmd(lose_king) + 1.6 * (14 - king_dist))/50
 
         
 
