@@ -55,7 +55,7 @@ def alphabeta(board: chess.Board, depth, alpha=-10000, beta=10000, key = None):
                 if score >= 5000:
                     score = beta
 
-                return score
+                return score, _
     count[0] += 1
     old_alpha = alpha
     # Evaluate the position if it's a leaf node or depth is zero
